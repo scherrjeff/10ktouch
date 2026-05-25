@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  Platform,
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -179,14 +180,25 @@ export default function WorkoutScreen({ onComplete }) {
         </View>
 
         <View style={styles.videoContainer}>
-          <YoutubePlayer
-            ref={playerRef}
-            height={210}
-            play={playing}
-            videoId={drill.youtubeId}
-            initialPlayerParams={{ start: drill.startTime ?? 0 }}
-            onChangeState={(state) => { if (state === 'ended') setPlaying(false); }}
-          />
+          {Platform.OS === 'web' ? (
+            <iframe
+              width="100%"
+              height="210"
+              src={`https://www.youtube.com/embed/${drill.youtubeId}?start=${drill.startTime ?? 0}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <YoutubePlayer
+              ref={playerRef}
+              height={210}
+              play={playing}
+              videoId={drill.youtubeId}
+              initialPlayerParams={{ start: drill.startTime ?? 0 }}
+              onChangeState={(state) => { if (state === 'ended') setPlaying(false); }}
+            />
+          )}
         </View>
 
         <View style={styles.setSection}>
