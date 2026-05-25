@@ -60,6 +60,11 @@ export default function WorkoutScreen({ onComplete }) {
     return () => clearInterval(id);
   }, [drillIndex]);
 
+  // Seek to this drill's start position when drill changes
+  useEffect(() => {
+    playerRef.current?.seekTo(drill.startTime ?? 0, true);
+  }, [drillIndex]);
+
   // Loop video within drill's time window
   useEffect(() => {
     if (!drill.endTime) return;
@@ -175,7 +180,6 @@ export default function WorkoutScreen({ onComplete }) {
 
         <View style={styles.videoContainer}>
           <YoutubePlayer
-            key={drillIndex}
             ref={playerRef}
             height={210}
             play={playing}
