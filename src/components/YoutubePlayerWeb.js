@@ -16,30 +16,43 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
     }, 500);
   }, []);
 
-  useEffect(() => {
-    const initPlayer = () => {
-      if (!containerRef.current) return;
-      playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId,
-        height,
-        width: '100%',
-        playerVars: {
-          start: startTime ?? 0,
-          autoplay: 0,
-          rel: 0,
-          playsinline: 1,
+  const initPlayer = useCallback((start, end) => {
+    if (!containerRef.current) return;
+    playerRef.current = new window.YT.Player(containerRef.current, {
+      videoId,
+      height,
+      width: '100%',
+      playerVars: {
+        start: start ?? 0,
+        end: end,       // causes player to pause at end time (Safari fallback)
+        autoplay: 0,
+        rel: 0,
+        playsinline: 1,
+      },
+      events: {
+        onReady: () => startLoop(start, end),
+        onStateChange: (event) => {
+          // YT.PlayerState.PAUSED = 2
+          // Safari: polling may fail, so when video pauses near endTime, loop manually
+          if (event.data === 2 && end) {
+            const t = playerRef.current?.getCurrentTime?.() ?? 0;
+            if (t >= end - 1) {
+              playerRef.current.seekTo(start ?? 0, true);
+              playerRef.current.playVideo();
+            }
+          }
         },
-        events: {
-          onReady: () => startLoop(startTime, endTime),
-        },
-      });
-    };
+      },
+    });
+  }, [videoId, height, startLoop]);
 
+  useEffect(() => {
+    const run = () => initPlayer(startTime, endTime);
     if (window.YT?.Player) {
-      initPlayer();
+      run();
     } else {
       if (!window.__ytQueue) window.__ytQueue = [];
-      window.__ytQueue.push(initPlayer);
+      window.__ytQueue.push(run);
       if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
         window.onYouTubeIframeAPIReady = () => {
           (window.__ytQueue || []).forEach(fn => fn());
@@ -50,14 +63,13 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
         document.head.appendChild(script);
       }
     }
-
     return () => {
       clearInterval(loopRef.current);
       playerRef.current?.destroy?.();
     };
   }, []);
 
-  // When drill changes, seek to new position and restart loop
+  // Drill changed — seek and restart loop
   useEffect(() => {
     if (!playerRef.current?.seekTo) return;
     playerRef.current.seekTo(startTime ?? 0, true);
