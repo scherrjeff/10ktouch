@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import YoutubePlayerWeb from '../components/YoutubePlayerWeb';
 import { useKeepAwake } from 'expo-keep-awake';
 import { DRILLS, TOTAL_TOUCHES } from '../data/drills';
 import { saveWorkout } from '../services/storage';
@@ -181,13 +182,11 @@ export default function WorkoutScreen({ onComplete }) {
 
         <View style={styles.videoContainer}>
           {Platform.OS === 'web' ? (
-            <iframe
-              width="100%"
-              height="210"
-              src={`https://www.youtube.com/embed/${drill.youtubeId}?start=${drill.startTime ?? 0}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{ border: 'none' }}
+            <YoutubePlayerWeb
+              videoId={drill.youtubeId}
+              startTime={drill.startTime}
+              endTime={drill.endTime}
+              height={210}
             />
           ) : (
             <YoutubePlayer
