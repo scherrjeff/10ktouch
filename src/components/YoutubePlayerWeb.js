@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 
 export default function YoutubePlayerWeb({ videoId, startTime, endTime, height = 210 }) {
-  const [seed, setSeed] = useState(0);
+  const iframeRef = useRef(null);
 
-  const params = [
-    `start=${startTime ?? 0}`,
-    'rel=0',
-    'playsinline=1',
-  ].join('&');
+  const buildSrc = (autoplay = false) => {
+    const params = [
+      `start=${startTime ?? 0}`,
+      `autoplay=${autoplay ? 1 : 0}`,
+      'rel=0',
+      'playsinline=1',
+    ].join('&');
+    return `https://www.youtube.com/embed/${videoId}?${params}`;
+  };
+
+  // Set src synchronously inside the click handler so iOS keeps the user-gesture context
+  const handleRestart = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = buildSrc(true);
+    }
+  };
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <iframe
-        key={`${startTime}-${seed}`}
-        src={`https://www.youtube.com/embed/${videoId}?${params}`}
+        ref={iframeRef}
+        src={buildSrc(false)}
         width="100%"
         height={height}
         style={{ border: 'none', display: 'block' }}
@@ -22,7 +33,7 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
       />
       {endTime && (
         <button
-          onClick={() => setSeed(s => s + 1)}
+          onClick={handleRestart}
           style={{
             position: 'absolute',
             top: 8,
