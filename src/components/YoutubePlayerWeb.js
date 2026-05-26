@@ -1,11 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 export default function YoutubePlayerWeb({ videoId, startTime, endTime, height = 210 }) {
   const iframeRef = useRef(null);
+  const timerRef  = useRef(null);
+  const startRef  = useRef(startTime);
+  const endRef    = useRef(endTime);
+  const videoRef  = useRef(videoId);
 
-  const buildSrc = (autoplay = false) => {
+  useEffect(() => { startRef.current = startTime; }, [startTime]);
+  useEffect(() => { endRef.current   = endTime;   }, [endTime]);
+  useEffect(() => { videoRef.current = videoId;   }, [videoId]);
+
+  const buildSrc = (autoplay = false, start = startTime) => {
     const params = [
-      `start=${startTime ?? 0}`,
+      `start=${start ?? 0}`,
       `autoplay=${autoplay ? 1 : 0}`,
       'rel=0',
       'playsinline=1',
@@ -13,12 +21,33 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
     return `https://www.youtube.com/embed/${videoId}?${params}`;
   };
 
-  // Set src synchronously inside the click handler so iOS keeps the user-gesture context
+  const scheduleLoop = () => {
+    clearTimeout(timerRef.current);
+    if (!endRef.current) return;
+    const ms = (endRef.current - (startRef.current ?? 0)) * 1000;
+    timerRef.current = setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.src = buildSrc(true, startRef.current);
+      }
+      scheduleLoop();
+    }, ms);
+  };
+
   const handleRestart = () => {
     if (iframeRef.current) {
       iframeRef.current.src = buildSrc(true);
     }
+    scheduleLoop();
   };
+
+  // Reset on drill change
+  useEffect(() => {
+    clearTimeout(timerRef.current);
+    if (iframeRef.current) {
+      iframeRef.current.src = buildSrc(false);
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [startTime]);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
