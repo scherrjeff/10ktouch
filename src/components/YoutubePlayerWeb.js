@@ -1,22 +1,19 @@
 import React, { useRef, useEffect } from 'react';
 
+const AFTER_BUFFER_MS = 3000; // ms to wait after endTime before restarting
+
 export default function YoutubePlayerWeb({ videoId, startTime, endTime, height = 210 }) {
   const iframeRef = useRef(null);
   const timerRef  = useRef(null);
   const startRef  = useRef(startTime);
   const endRef    = useRef(endTime);
-  const videoRef  = useRef(videoId);
 
   useEffect(() => { startRef.current = startTime; }, [startTime]);
   useEffect(() => { endRef.current   = endTime;   }, [endTime]);
-  useEffect(() => { videoRef.current = videoId;   }, [videoId]);
-
-  const BEFORE = 1; // seconds to start before the drill timestamp
-  const AFTER  = 2; // extra seconds to wait after endTime before restarting
 
   const buildSrc = (autoplay = false, start = startTime) => {
     const params = [
-      `start=${Math.max(0, (start ?? 0) - BEFORE)}`,
+      `start=${start ?? 0}`,
       `autoplay=${autoplay ? 1 : 0}`,
       'rel=0',
       'playsinline=1',
@@ -27,7 +24,7 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
   const scheduleLoop = () => {
     clearTimeout(timerRef.current);
     if (!endRef.current) return;
-    const ms = (endRef.current - (startRef.current ?? 0) + BEFORE + AFTER) * 1000;
+    const ms = (endRef.current - (startRef.current ?? 0)) * 1000 + AFTER_BUFFER_MS;
     timerRef.current = setTimeout(() => {
       if (iframeRef.current) {
         iframeRef.current.src = buildSrc(true, startRef.current);
