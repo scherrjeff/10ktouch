@@ -11,9 +11,12 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
   useEffect(() => { endRef.current   = endTime;   }, [endTime]);
   useEffect(() => { videoRef.current = videoId;   }, [videoId]);
 
+  const BEFORE = 1; // seconds to start before the drill timestamp
+  const AFTER  = 2; // extra seconds to wait after endTime before restarting
+
   const buildSrc = (autoplay = false, start = startTime) => {
     const params = [
-      `start=${start ?? 0}`,
+      `start=${Math.max(0, (start ?? 0) - BEFORE)}`,
       `autoplay=${autoplay ? 1 : 0}`,
       'rel=0',
       'playsinline=1',
@@ -24,7 +27,7 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
   const scheduleLoop = () => {
     clearTimeout(timerRef.current);
     if (!endRef.current) return;
-    const ms = (endRef.current - (startRef.current ?? 0)) * 1000;
+    const ms = (endRef.current - (startRef.current ?? 0) + BEFORE + AFTER) * 1000;
     timerRef.current = setTimeout(() => {
       if (iframeRef.current) {
         iframeRef.current.src = buildSrc(true, startRef.current);
