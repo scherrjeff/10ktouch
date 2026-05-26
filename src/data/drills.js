@@ -10,8 +10,8 @@ export const DRILLS = [
     instructions:
       'Tap the top of the ball with your toe in the rhythm L, L, R, L, L, R. Stay on your toes, keep the ball stationary, and build speed each set.',
     youtubeId: MAIN_VIDEO,
-    startTime: 59,
-    endTime: 59,
+    startTime: 58,
+    endTime: 59.5,
   },
   {
     id: 2,
@@ -34,7 +34,8 @@ export const DRILLS = [
     instructions:
       'Same toe tap pattern but starting on the right: R, R, L, R, R, L. Focus on rhythm and a quick, light touch.',
     youtubeId: MAIN_VIDEO,
-    startTime: 67,
+    startTime: 68,
+    endTime: 72,
   },
   {
     id: 4,
@@ -45,6 +46,8 @@ export const DRILLS = [
     instructions:
       'Juggle with your right foot only. Keep every touch below knee height. Use the laces and stay balanced on your left foot.',
     youtubeId: MAIN_VIDEO,
+    startTime: 73,
+    endTime: 82,
   },
   {
     id: 5,
@@ -55,6 +58,8 @@ export const DRILLS = [
     instructions:
       'Alternate inside and outside of both feet — inside right, outside right, inside left, outside left. Keep the ball tight and controlled.',
     youtubeId: MAIN_VIDEO,
+    startTime: 82,
+    endTime: 87,
   },
   {
     id: 6,
@@ -65,6 +70,8 @@ export const DRILLS = [
     instructions:
       'Juggle with your left foot only, every touch below knee height. Focus on a consistent, soft touch with the laces.',
     youtubeId: MAIN_VIDEO,
+    startTime: 87,
+    endTime: 95,
   },
   {
     id: 7,
@@ -75,6 +82,8 @@ export const DRILLS = [
     instructions:
       'Right foot only — tap inside, then outside of the ball repeatedly. Keep your ankle locked and stay over the ball.',
     youtubeId: MAIN_VIDEO,
+    startTime: 95,
+    endTime: 113,
   },
   {
     id: 8,
@@ -85,6 +94,8 @@ export const DRILLS = [
     instructions:
       'Juggle alternating feet, getting the ball to waist height each touch. Use a clean laces touch and control the height.',
     youtubeId: MAIN_VIDEO,
+    startTime: 113,
+    endTime: 117,
   },
   {
     id: 9,
@@ -95,6 +106,8 @@ export const DRILLS = [
     instructions:
       'Sit on the ground and juggle the ball with your feet in the air. Keep your core tight and use both feet alternately.',
     youtubeId: MAIN_VIDEO,
+    startTime: 117,
+    endTime: 123,
   },
   {
     id: 10,
@@ -105,6 +118,8 @@ export const DRILLS = [
     instructions:
       'Right foot only, each juggle reaching waist height. Focus on a controlled, cushioned touch to maintain height.',
     youtubeId: MAIN_VIDEO,
+    startTime: 123,
+    endTime: 129,
   },
   {
     id: 11,
@@ -115,6 +130,8 @@ export const DRILLS = [
     instructions:
       'Left foot only — inside touch, then outside touch of the ball, repeated rapidly. Stay low and agile.',
     youtubeId: MAIN_VIDEO,
+    startTime: 129,
+    endTime: 137,
   },
   {
     id: 12,
@@ -125,6 +142,8 @@ export const DRILLS = [
     instructions:
       'Left foot only, each juggle reaching waist height. Stay balanced on your right foot and use a clean laces touch.',
     youtubeId: MAIN_VIDEO,
+    startTime: 137,
+    endTime: 143,
   },
   {
     id: 13,
@@ -135,6 +154,8 @@ export const DRILLS = [
     instructions:
       'Push the ball forward with the inside of your right foot, then pull it back with the sole. Keep the motion fluid and stay over the ball.',
     youtubeId: MAIN_VIDEO,
+    startTime: 143,
+    endTime: 153,
   },
   {
     id: 14,
@@ -145,6 +166,8 @@ export const DRILLS = [
     instructions:
       'Push the ball forward with the inside of your left foot, then pull it back with the sole. Build speed while keeping control.',
     youtubeId: MAIN_VIDEO,
+    startTime: 153,
+    endTime: 157,
   },
   {
     id: 15,
@@ -155,6 +178,8 @@ export const DRILLS = [
     instructions:
       'Juggle alternating feet, getting the ball above head height each touch. Requires power and balance — use a firm laces strike.',
     youtubeId: MAIN_VIDEO,
+    startTime: 157,
+    endTime: 167,
   },
   {
     id: 16,
@@ -165,6 +190,8 @@ export const DRILLS = [
     instructions:
       'Right foot only: drag the ball diagonally out, then drag it back with the sole forming a V shape. Stay low with a wide stance.',
     youtubeId: MAIN_VIDEO,
+    startTime: 167,
+    endTime: 173,
   },
   {
     id: 17,
@@ -175,6 +202,8 @@ export const DRILLS = [
     instructions:
       'Left foot only V-tap drill. Drag diagonally out then pull back with the sole. Keep your touches quick and precise.',
     youtubeId: MAIN_VIDEO,
+    startTime: 173,
+    endTime: 177,
   },
   {
     id: 18,
@@ -185,6 +214,8 @@ export const DRILLS = [
     instructions:
       'Alternate feet on the V-tap — right foot drags out, pulls back, then left foot does the same. Maintain a steady rhythm.',
     youtubeId: MAIN_VIDEO,
+    startTime: 177,
+    endTime: 187,
   },
   {
     id: 19,
@@ -195,6 +226,8 @@ export const DRILLS = [
     instructions:
       'Standard alternating toe taps on top of the ball. Keep the ball stationary, stay on your toes, and push the pace.',
     youtubeId: MAIN_VIDEO,
+    startTime: 187,
+    endTime: 194,
   },
   {
     id: 20,
@@ -205,6 +238,8 @@ export const DRILLS = [
     instructions:
       'Tap the ball left and right with the inside of each foot like a pendulum (bell). Keep light contact and build speed each set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 194,
+    endTime: 201,
   },
   {
     id: 21,
@@ -215,6 +250,8 @@ export const DRILLS = [
     instructions:
       'Take 3 small dribbles forward, then execute a Cruyff turn — drag the ball behind your standing leg and change direction. Alternate left and right. 50 cuts per set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 201,
+    endTime: 207,
   },
   {
     id: 22,
@@ -225,6 +262,8 @@ export const DRILLS = [
     instructions:
       'Take 3 dribbles then cut outside-to-inside with the left foot to change direction. Stay low through the cut. 50 cuts per set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 207,
+    endTime: 215,
   },
   {
     id: 23,
@@ -235,6 +274,8 @@ export const DRILLS = [
     instructions:
       'Take 3 dribbles then cut outside-to-inside with the right foot to change direction. Explode out of the cut. 50 cuts per set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 215,
+    endTime: 222,
   },
   {
     id: 24,
@@ -245,6 +286,8 @@ export const DRILLS = [
     instructions:
       'Juggle alternating feet, keeping every touch below knee height. Focus on consistency and soft, controlled touches.',
     youtubeId: MAIN_VIDEO,
+    startTime: 222,
+    endTime: 229,
   },
   {
     id: 25,
@@ -255,6 +298,8 @@ export const DRILLS = [
     instructions:
       'Take 3 dribbles forward then pull the ball back with the sole to reverse direction. Alternate which foot does the pullback. 50 cuts per set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 229,
+    endTime: 236,
   },
   {
     id: 26,
@@ -265,6 +310,8 @@ export const DRILLS = [
     instructions:
       'Sit on the ground, lean back slightly, and juggle using both feet alternately. Keep your core engaged throughout.',
     youtubeId: MAIN_VIDEO,
+    startTime: 236,
+    endTime: 242,
   },
   {
     id: 27,
@@ -275,6 +322,8 @@ export const DRILLS = [
     instructions:
       'Alternating toe taps on top of the ball. Maximum speed — keep the ball completely stationary.',
     youtubeId: MAIN_VIDEO,
+    startTime: 242,
+    endTime: 249,
   },
   {
     id: 28,
@@ -285,6 +334,8 @@ export const DRILLS = [
     instructions:
       'Inside-of-foot pendulum taps, side to side. Quick light touches — push the tempo on each set.',
     youtubeId: MAIN_VIDEO,
+    startTime: 249,
+    endTime: 257,
   },
   {
     id: 29,
@@ -295,6 +346,8 @@ export const DRILLS = [
     instructions:
       'Dribble using only the sole of your right foot, rolling the ball left and right. Keep it tight and controlled.',
     youtubeId: MAIN_VIDEO,
+    startTime: 257,
+    endTime: 262,
   },
   {
     id: 30,
@@ -305,6 +358,8 @@ export const DRILLS = [
     instructions:
       'Dribble using only the sole of your left foot, rolling the ball left and right. Move at a consistent, controlled pace.',
     youtubeId: MAIN_VIDEO,
+    startTime: 262,
+    endTime: 271,
   },
   {
     id: 31,
@@ -315,6 +370,8 @@ export const DRILLS = [
     instructions:
       'Juggle alternating feet at waist height. Clean, controlled touches — you should be able to predict each bounce.',
     youtubeId: MAIN_VIDEO,
+    startTime: 271,
+    endTime: 278,
   },
   {
     id: 32,
@@ -325,6 +382,8 @@ export const DRILLS = [
     instructions:
       'Brazilian-style sole rolls: roll the ball forward with the sole, step over, and repeat. Alternate feet in a smooth, continuous motion.',
     youtubeId: MAIN_VIDEO,
+    startTime: 278,
+    endTime: 284,
   },
   {
     id: 33,
@@ -335,6 +394,8 @@ export const DRILLS = [
     instructions:
       'Right foot only Brazilian sole roll — push the ball forward with the sole, step through, and reset. Keep a tight touch.',
     youtubeId: MAIN_VIDEO,
+    startTime: 284,
+    endTime: 292,
   },
   {
     id: 34,
@@ -345,6 +406,8 @@ export const DRILLS = [
     instructions:
       'Left foot only Brazilian sole roll. Roll the ball forward with the sole, step through, and repeat. Build fluidity.',
     youtubeId: MAIN_VIDEO,
+    startTime: 292,
+    endTime: 298,
   },
   {
     id: 35,
@@ -355,6 +418,8 @@ export const DRILLS = [
     instructions:
       'Alternating foot juggles, striking firmly to get the ball above head height each time. Stay composed and maintain control.',
     youtubeId: MAIN_VIDEO,
+    startTime: 298,
+    endTime: 307,
   },
   {
     id: 36,
@@ -365,6 +430,8 @@ export const DRILLS = [
     instructions:
       'Finish strong — alternating foot juggles kept below knee height for 200 touches. Consistent, light, controlled.',
     youtubeId: MAIN_VIDEO,
+    startTime: 307,
+    endTime: 312,
   },
 ];
 

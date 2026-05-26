@@ -22,27 +22,38 @@ import MilestoneBanner from '../components/MilestoneBanner';
 export default function WorkoutScreen({ onComplete }) {
   useKeepAwake();
 
-  const [drillIndex, setDrillIndex]         = useState(0);
-  const [currentSet, setCurrentSet]         = useState(1);
+  const [drillIndex, setDrillIndex]             = useState(0);
+  const [currentSet, setCurrentSet]             = useState(1);
   const [completedTouches, setCompletedTouches] = useState(0);
-  const [playing, setPlaying]               = useState(false);
-  const [showExitModal, setShowExitModal]   = useState(false);
-  const [activeMilestone, setActiveMilestone] = useState(null);
+  const [playing, setPlaying]                   = useState(false);
+  const [showExitModal, setShowExitModal]       = useState(false);
+  const [activeMilestone, setActiveMilestone]   = useState(null);
 
   // Timers
   const [workoutElapsed, setWorkoutElapsed] = useState(0);
   const [drillElapsed, setDrillElapsed]     = useState(0);
   const workoutStartRef = useRef(Date.now());
   const drillStartRef   = useRef(Date.now());
-  const drillTimesRef   = useRef({}); // { drillIndex: seconds }
+  const drillTimesRef   = useRef({});
 
-  // Milestone detection
+  // Tracks which sets have been completed: Set of "drillIndex-setNum" keys
+  const completedSetsRef   = useRef(new Set());
+  // Furthest drill index reached (for payload when navigating back before finishing)
+  const maxDrillReachedRef = useRef(0);
+
   const prevTouchesRef = useRef(0);
   const playerRef      = useRef(null);
 
-  const drill      = DRILLS[drillIndex];
-  const isLastSet  = currentSet === drill.sets;
+  const drill       = DRILLS[drillIndex];
+  const isLastSet   = currentSet === drill.sets;
   const isLastDrill = drillIndex === DRILLS.length - 1;
+
+  // True when the current set was already completed (user navigated back to it)
+  const currentSetKey  = `${drillIndex}-${currentSet}`;
+  const alreadyDone    = completedSetsRef.current.has(currentSetKey);
+  const drillComplete  = Array.from({ length: drill.sets }, (_, s) =>
+    completedSetsRef.current.has(`${drillIndex}-${s + 1}`)
+  ).every(Boolean);
 
   // Overall workout timer
   useEffect(() => {
@@ -52,8 +63,17 @@ export default function WorkoutScreen({ onComplete }) {
     return () => clearInterval(id);
   }, []);
 
-  // Per-drill timer — resets when drill changes
+  // Per-drill timer — resets when drill changes; frozen on completed drills
   useEffect(() => {
+    const isDrillDone = Array.from({ length: DRILLS[drillIndex].sets }, (_, s) =>
+      completedSetsRef.current.has(`${drillIndex}-${s + 1}`)
+    ).every(Boolean);
+
+    if (isDrillDone) {
+      setDrillElapsed(drillTimesRef.current[drillIndex] ?? 0);
+      return;
+    }
+
     drillStartRef.current = Date.now();
     setDrillElapsed(0);
     const id = setInterval(() => {
@@ -67,7 +87,7 @@ export default function WorkoutScreen({ onComplete }) {
     playerRef.current?.seekTo(drill.startTime ?? 0, true);
   }, [drillIndex]);
 
-  // Loop video within drill's time window
+  // Loop video within drill's time window (native only)
   useEffect(() => {
     if (!drill.endTime) return;
     const id = setInterval(() => {
@@ -97,39 +117,64 @@ export default function WorkoutScreen({ onComplete }) {
 
   const buildWorkoutPayload = useCallback((finalTouches, isComplete) => {
     const totalTime = Math.floor((Date.now() - workoutStartRef.current) / 1000);
-    // Build per-drill entries for drills that were started
-    const drills = DRILLS.slice(0, drillIndex + 1).map((d, i) => ({
-      drillId:   d.id,
-      name:      d.name,
-      time:      drillTimesRef.current[i] ?? 0,
-      touches:   i < drillIndex ? d.totalTouches : finalTouches - DRILLS.slice(0, i).reduce((s, x) => s + x.totalTouches, 0),
-      completed: i < drillIndex || (i === drillIndex && isComplete),
-    }));
+    const maxIdx = maxDrillReachedRef.current;
+    const drills = DRILLS.slice(0, maxIdx + 1).map((d, i) => {
+      const drillDone = Array.from({ length: d.sets }, (_, s) =>
+        completedSetsRef.current.has(`${i}-${s + 1}`)
+      ).every(Boolean);
+      const drillTouches = Array.from({ length: d.sets }, (_, s) =>
+        completedSetsRef.current.has(`${i}-${s + 1}`) ? d.repsPerSet : 0
+      ).reduce((a, b) => a + b, 0);
+      return {
+        drillId:   d.id,
+        name:      d.name,
+        time:      drillTimesRef.current[i] ?? 0,
+        touches:   drillTouches,
+        completed: drillDone,
+      };
+    });
     return {
-      id:            Date.now().toString(),
-      date:          todayISO(),
-      startedAt:     new Date(workoutStartRef.current).toISOString(),
-      completedAt:   new Date().toISOString(),
+      id:          Date.now().toString(),
+      date:        todayISO(),
+      startedAt:   new Date(workoutStartRef.current).toISOString(),
+      completedAt: new Date().toISOString(),
       totalTime,
-      totalTouches:  finalTouches,
+      totalTouches: finalTouches,
       isComplete,
       drills,
     };
-  }, [drillIndex]);
+  }, []);
+
+  // Navigate back one set (or to the last set of the previous drill)
+  const handlePrev = useCallback(() => {
+    setPlaying(false);
+    if (currentSet > 1) {
+      setCurrentSet(s => s - 1);
+    } else if (drillIndex > 0) {
+      setDrillIndex(i => i - 1);
+      setCurrentSet(DRILLS[drillIndex - 1].sets);
+    }
+  }, [currentSet, drillIndex]);
 
   const handleDone = useCallback(() => {
     setPlaying(false);
 
-    const newTotal = completedTouches + drill.repsPerSet;
-    setCompletedTouches(newTotal);
+    // Only count touches the first time this set is completed
+    let newTotal = completedTouches;
+    if (!alreadyDone) {
+      completedSetsRef.current = new Set([...completedSetsRef.current, currentSetKey]);
+      newTotal = completedTouches + drill.repsPerSet;
+      setCompletedTouches(newTotal);
+    }
 
+    // Navigate forward within the drill
     if (!isLastSet) {
-      setCurrentSet((s) => s + 1);
+      setCurrentSet(s => s + 1);
       return;
     }
 
-    // Finished all sets of this drill — record its time
-    recordDrillTime(drillIndex);
+    // Last set of this drill — record time only on first completion
+    if (!alreadyDone) recordDrillTime(drillIndex);
 
     if (isLastDrill) {
       const payload = buildWorkoutPayload(newTotal, true);
@@ -138,9 +183,17 @@ export default function WorkoutScreen({ onComplete }) {
       return;
     }
 
-    setDrillIndex((i) => i + 1);
+    const nextIdx = drillIndex + 1;
+    if (nextIdx > maxDrillReachedRef.current) maxDrillReachedRef.current = nextIdx;
+    setDrillIndex(nextIdx);
     setCurrentSet(1);
-  }, [isLastSet, isLastDrill, completedTouches, drill, drillIndex, recordDrillTime, buildWorkoutPayload, onComplete]);
+  }, [isLastSet, isLastDrill, completedTouches, alreadyDone, currentSetKey, drill, drillIndex, recordDrillTime, buildWorkoutPayload, onComplete]);
+
+  const isAtStart = drillIndex === 0 && currentSet === 1;
+
+  const doneBtnLabel = alreadyDone
+    ? (isLastSet ? (isLastDrill ? 'FINISH WORKOUT' : 'NEXT DRILL  →') : `NEXT SET  →`)
+    : (isLastSet ? (isLastDrill ? 'FINISH WORKOUT' : 'NEXT DRILL  →') : `DONE  ·  SET ${currentSet + 1} NEXT`);
 
   const touchesThisDrill =
     currentSet < drill.sets
@@ -171,7 +224,14 @@ export default function WorkoutScreen({ onComplete }) {
         <View style={styles.drillHeader}>
           <View style={styles.drillTitleRow}>
             <Text style={styles.drillNumber}>Drill {drillIndex + 1}</Text>
-            <Text style={styles.drillTimer}>⏱ {formatTime(drillElapsed)}</Text>
+            <View style={styles.drillTitleRight}>
+              {drillComplete && (
+                <View style={styles.completeBadge}>
+                  <Text style={styles.completeBadgeText}>✓ DRILL DONE</Text>
+                </View>
+              )}
+              <Text style={styles.drillTimer}>⏱ {formatTime(drillElapsed)}</Text>
+            </View>
           </View>
           <Text style={styles.drillName}>{drill.name}</Text>
           <Text style={styles.drillMeta}>
@@ -201,7 +261,14 @@ export default function WorkoutScreen({ onComplete }) {
         </View>
 
         <View style={styles.setSection}>
-          <Text style={styles.setLabel}>{touchesThisDrill}</Text>
+          <View style={styles.setLabelRow}>
+            <Text style={styles.setLabel}>{touchesThisDrill}</Text>
+            {alreadyDone && (
+              <View style={styles.setDoneBadge}>
+                <Text style={styles.setDoneBadgeText}>✓ SET DONE</Text>
+              </View>
+            )}
+          </View>
           <SetDots totalSets={drill.sets} currentSet={currentSet} />
         </View>
 
@@ -220,12 +287,18 @@ export default function WorkoutScreen({ onComplete }) {
           <Text style={styles.exitText}>EXIT</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.doneBtn} onPress={handleDone} activeOpacity={0.85}>
-          <Text style={styles.doneBtnText}>
-            {isLastSet
-              ? isLastDrill ? 'FINISH WORKOUT' : 'NEXT DRILL  →'
-              : `DONE  ·  SET ${currentSet + 1} NEXT`}
-          </Text>
+        {!isAtStart && (
+          <TouchableOpacity style={styles.prevBtn} onPress={handlePrev} activeOpacity={0.7}>
+            <Text style={styles.prevText}>← PREV</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[styles.doneBtn, alreadyDone && styles.doneBtnSkip]}
+          onPress={handleDone}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.doneBtnText, alreadyDone && styles.doneBtnSkipText]}>{doneBtnLabel}</Text>
         </TouchableOpacity>
       </View>
 
@@ -269,8 +342,11 @@ const styles = StyleSheet.create({
   scroll:        { flex: 1 },
   scrollContent: { paddingBottom: 16 },
   drillHeader:   { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  drillTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  drillNumber:   { color: '#22C55E', fontSize: 12, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  drillTitleRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  drillTitleRight:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  drillNumber:        { color: '#22C55E', fontSize: 12, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  completeBadge:      { backgroundColor: '#14532D', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  completeBadgeText:  { color: '#22C55E', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   drillTimer:    { color: '#6B7280', fontSize: 12, fontWeight: '600' },
   drillName:     { color: '#FFFFFF', fontSize: 24, fontWeight: '800', letterSpacing: -0.5, lineHeight: 30 },
   drillMeta:     { color: '#6B7280', fontSize: 13, marginTop: 4 },
@@ -280,7 +356,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#111827', borderWidth: 1, borderColor: '#1F2937',
   },
   setSection:       { alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 },
-  setLabel:         { color: '#D1D5DB', fontSize: 15, fontWeight: '600', marginBottom: 8 },
+  setLabelRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  setLabel:         { color: '#D1D5DB', fontSize: 15, fontWeight: '600' },
+  setDoneBadge:     { backgroundColor: '#14532D', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  setDoneBadgeText: { color: '#22C55E', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   instructionsBox:  { marginHorizontal: 16, backgroundColor: '#111827', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#1F2937' },
   instructionsTitle: { color: '#6B7280', fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 8 },
   instructionsText:  { color: '#D1D5DB', fontSize: 14, lineHeight: 22 },
@@ -291,8 +370,12 @@ const styles = StyleSheet.create({
   },
   exitBtn:      { paddingHorizontal: 16, height: 56, backgroundColor: '#1F2937', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   exitText:     { color: '#9CA3AF', fontSize: 13, fontWeight: '700', letterSpacing: 1 },
-  doneBtn:      { flex: 1, backgroundColor: '#22C55E', borderRadius: 14, height: 56, alignItems: 'center', justifyContent: 'center' },
-  doneBtnText:  { color: '#0D1117', fontSize: 15, fontWeight: '800', letterSpacing: 1 },
+  prevBtn:      { paddingHorizontal: 16, height: 56, backgroundColor: '#1F2937', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  prevText:     { color: '#9CA3AF', fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  doneBtn:          { flex: 1, backgroundColor: '#22C55E', borderRadius: 14, height: 56, alignItems: 'center', justifyContent: 'center' },
+  doneBtnSkip:      { backgroundColor: '#1F2937' },
+  doneBtnText:      { color: '#0D1117', fontSize: 15, fontWeight: '800', letterSpacing: 1 },
+  doneBtnSkipText:  { color: '#9CA3AF' },
   overlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 },
   modalCard:    { width: '100%', backgroundColor: '#111827', borderRadius: 20, padding: 24, borderWidth: 1, borderColor: '#1F2937' },
   modalTitle:   { color: '#FFFFFF', fontSize: 22, fontWeight: '800', marginBottom: 10 },

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const AFTER_MS = 3000;
+const POLL_MS = 250;
 
 function buildSrc(videoId, startTime, autoplay) {
   return (
@@ -12,15 +12,14 @@ function buildSrc(videoId, startTime, autoplay) {
 
 export default function YoutubePlayerWeb({ videoId, startTime, endTime, height = 210 }) {
   const iframeRef  = useRef(null);
-  const timerRef   = useRef(null);
+  const intervalRef = useRef(null);
   const startRef   = useRef(startTime);
   const endRef     = useRef(endTime);
   const loopingRef = useRef(false);
+  const playStartRef = useRef(null); // wall-clock time when video started at startTime
 
   const [started, setStarted] = useState(false);
   const [looping, setLooping] = useState(false);
-  // iframeSrc drives the React-controlled src — we deliberately keep it at the
-  // non-autoplay URL after the user taps, so React never overwrites our direct mutation
   const [iframeSrc, setIframeSrc] = useState(() => buildSrc(videoId, startTime, false));
 
   useEffect(() => { startRef.current = startTime; }, [startTime]);
@@ -33,32 +32,33 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
     );
   }, []);
 
-  const scheduleLoop = useCallback(() => {
-    clearTimeout(timerRef.current);
-    if (!endRef.current || !loopingRef.current) return;
-    const ms = (endRef.current - (startRef.current ?? 0)) * 1000 + AFTER_MS;
-    timerRef.current = setTimeout(() => {
-      if (loopingRef.current) {
-        // seekTo on an already-playing video works on iOS without a user gesture
-        postCmd('seekTo', [startRef.current ?? 0, true]);
-      }
-      scheduleLoop();
-    }, ms);
-  }, [postCmd]);
+  const stopPolling = useCallback(() => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  }, []);
 
-  // Overlay play button — mutates iframe.src directly and synchronously so iOS
-  // sees it as a user gesture (async setState would lose that context)
+  const startPolling = useCallback(() => {
+    stopPolling();
+    if (!endRef.current) return;
+    playStartRef.current = Date.now();
+    intervalRef.current = setInterval(() => {
+      if (!loopingRef.current) { stopPolling(); return; }
+      const elapsed = (Date.now() - playStartRef.current) / 1000;
+      const estimated = (startRef.current ?? 0) + elapsed;
+      if (estimated >= endRef.current) {
+        postCmd('seekTo', [startRef.current ?? 0, true]);
+        playStartRef.current = Date.now();
+      }
+    }, POLL_MS);
+  }, [postCmd, stopPolling]);
+
   const handleStart = () => {
     const newSrc = buildSrc(videoId, startRef.current, true);
-    // Direct DOM mutation keeps us in the user-gesture call stack — iOS allows autoplay
     if (iframeRef.current) iframeRef.current.src = newSrc;
-    // We intentionally do NOT call setIframeSrc(newSrc) so React's virtual DOM
-    // still shows the old non-autoplay URL — on re-render React sees no src change
-    // and never overwrites our mutation above
     loopingRef.current = true;
     setStarted(true);
     setLooping(true);
-    scheduleLoop();
+    startPolling();
   };
 
   const handleToggle = () => {
@@ -68,22 +68,22 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
     if (next) {
       postCmd('seekTo', [startRef.current ?? 0, true]);
       postCmd('playVideo');
-      scheduleLoop();
+      startPolling();
     } else {
-      clearTimeout(timerRef.current);
+      stopPolling();
       postCmd('pauseVideo');
     }
   };
 
-  // Reset when drill changes — here we DO update iframeSrc so React reloads the iframe
+  // Reset when drill changes
   useEffect(() => {
-    clearTimeout(timerRef.current);
+    stopPolling();
     loopingRef.current = false;
     setStarted(false);
     setLooping(false);
     setIframeSrc(buildSrc(videoId, startTime, false));
-    return () => clearTimeout(timerRef.current);
-  }, [videoId, startTime]);
+    return () => stopPolling();
+  }, [videoId, startTime, stopPolling]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height }}>
@@ -97,7 +97,6 @@ export default function YoutubePlayerWeb({ videoId, startTime, endTime, height =
         allowFullScreen
       />
 
-      {/* Overlay — shown until user taps; direct DOM mutation keeps iOS user-gesture context */}
       {!started && (
         <div
           onClick={handleStart}
