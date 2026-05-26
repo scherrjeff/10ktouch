@@ -11,7 +11,7 @@ export const DRILLS = [
       'Tap the top of the ball with your toe in the rhythm L, L, R, L, L, R. Stay on your toes, keep the ball stationary, and build speed each set.',
     youtubeId: MAIN_VIDEO,
     startTime: 59,
-    endTime: 60,
+    endTime: 59,
   },
   {
     id: 2,
